@@ -1,5 +1,6 @@
 import os
 import json
+import wandb
 from tqdm import tqdm
 from PIL import Image
 
@@ -8,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.tensorboard import SummaryWriter
 
 cwd = os.getcwd()
 TRAIN_JSON_PATH = cwd + "/archive/train_data.json"
@@ -24,6 +26,8 @@ WD = 0.2
 EPS = 1e-6
 CLIP_MODEL = "ViT-B/32"
 EPOCHS = 20
+USE_WANDB = False
+WANDB_PROJECT_NAME = "clip-finetune"
 
 
 class ImageTitleDataset(Dataset):
@@ -80,7 +84,12 @@ def convert_model_to_fp32(model):
         p.grad.data = p.grad.data.float()
 
 def train():
-
+    if USE_WANDB:
+        wandb.init(
+            project=WANDB_PROJECT_NAME,
+            sync_tensorboard=True,
+        )
+    writer = SummaryWriter()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, preprocess = clip.load(CLIP_MODEL, device)
 
@@ -108,6 +117,7 @@ def train():
                             weight_decay=WD)
 
     for epoch in range(EPOCHS):
+        step = 0
         for batch in tqdm(train_dataloader):
             images, texts = batch
             images = images.to(device)
@@ -129,6 +139,9 @@ def train():
                 convert_model_to_fp32(model)
                 opttimizer.step()
                 clip.model.convert_weights(model)
+
+            writer.add_scalar("total_loss", total_loss.mean().detach.cpu(), step)
+            step += 1
 
     
 
