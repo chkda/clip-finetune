@@ -115,9 +115,8 @@ def train():
                             betas=BETAS,
                             eps=EPS,
                             weight_decay=WD)
-
+    step = 0
     for epoch in range(EPOCHS):
-        step = 0
         for batch in tqdm(train_dataloader):
             images, texts = batch
             images = images.to(device)
