@@ -140,7 +140,7 @@ def train():
                 opttimizer.step()
                 clip.model.convert_weights(model)
 
-            writer.add_scalar("total_loss", total_loss.mean().detach.cpu(), step)
+            writer.add_scalar("total_loss", total_loss.mean().detach().cpu(), step)
             step += 1
 
     
